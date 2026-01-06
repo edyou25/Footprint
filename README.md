@@ -32,8 +32,27 @@ npx http-server
 2. 更新 `index.html` 中的地图 ID（mid 参数）
 3. 修改标题、颜色等样式
 
+## 重要：设置地图为公开访问
+
+**⚠️ 如果其他人无法看到地图，需要将 Google My Maps 设置为公开：**
+
+1. 打开你的 [Google My Maps](https://www.google.com/maps/d/edit?mid=1LUlaWSUHRk2Q5ZpKm6CipHDTpGYEtww&usp=sharing)
+2. 点击右上角的 **"共享"** (Share) 按钮
+3. 在"获取链接"部分，将访问权限改为：
+   - **"知道链接的任何人"** (Anyone with the link) 或
+   - **"公开在网络上"** (Public on the web)
+4. 点击 **"完成"** (Done)
+5. 刷新网页，地图应该可以正常显示了
+
+### 为什么需要这样做？
+
+- Google My Maps 默认是私有的，只有地图创建者登录后才能查看
+- 设置为公开后，任何人都可以通过网页访问地图，无需登录 Google 账号
+- 网页会自动检测地图是否可访问，并显示友好的提示信息
+
 ## 注意事项
 
 - 确保你的 Google My Maps 设置为"公开"或"通过链接共享"，这样网页才能正常显示
 - 如果地图无法显示，请检查地图的分享设置
+- 网页会显示提示信息，指导如何设置地图为公开访问
 
