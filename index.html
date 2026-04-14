@@ -465,12 +465,12 @@
         let playing = false;
         let rafId = null;
         let lastFrameTs = null;
-        let viewportKey = "";
+        let sameLocationOffset = false;
 
         const ANIMATION_DURATION = 30000; // 30秒跑完整条时间轴
         const MARKER_TRANSITION_MS = 450;
-        const VIEWPORT_PADDING = [64, 64];
-        const VIEWPORT_MAX_ZOOM = 11;
+        const SAME_LOCATION_THRESHOLD = 0.001; // degrees (~100m)
+        const SAME_CITY_ICON_OFFSET = 16; // pixels
 
         const playBtn = document.getElementById("playBtn");
         const timeSlider = document.getElementById("timeSlider");
@@ -726,12 +726,12 @@
             return formatter.format(new Date(ms)).replace(/\//g, "-");
         }
 
-        function createDivIcon(className, emoji) {
+        function createDivIcon(className, emoji, xOffset = 0) {
             return L.divIcon({
                 className: "",
                 html: `<div class="person-marker ${className}">${emoji}</div>`,
                 iconSize: [32, 32],
-                iconAnchor: [16, 16]
+                iconAnchor: [16 + xOffset, 16]
             });
         }
 
@@ -850,6 +850,21 @@
             const posA = getActiveStop(parsedA, currentMs);
             const posB = getActiveStop(parsedB, currentMs);
 
+            // Offset markers when both persons share the same city/coordinates
+            const same = !!(posA && posB
+                && Math.abs(posA.lat - posB.lat) < SAME_LOCATION_THRESHOLD
+                && Math.abs(posA.lng - posB.lng) < SAME_LOCATION_THRESHOLD);
+
+            if (same !== sameLocationOffset) {
+                sameLocationOffset = same;
+                if (markerA) {
+                    markerA.setIcon(createDivIcon("person-a", "👦🏻", same ? -SAME_CITY_ICON_OFFSET : 0));
+                }
+                if (markerB) {
+                    markerB.setIcon(createDivIcon("person-b", "👧🏻", same ? SAME_CITY_ICON_OFFSET : 0));
+                }
+            }
+
             if (posA && markerControllerA) {
                 moveMarkerToStop(markerControllerA, PERSON_A_LABEL, posA, immediate);
             }
@@ -858,7 +873,6 @@
                 moveMarkerToStop(markerControllerB, PERSON_B_LABEL, posB, immediate);
             }
 
-            updateViewport(posA, posB, immediate);
             timeSlider.value = String(Math.round(currentMs));
             updateLabel();
         }
@@ -913,52 +927,6 @@
             playBtn.textContent = "⏸";
             lastFrameTs = null;
             rafId = requestAnimationFrame(animate);
-        }
-
-        function updateViewport(stopA, stopB, immediate = false) {
-            if (!osmMap) {
-                return;
-            }
-
-            const activeStops = [stopA, stopB].filter(Boolean);
-            if (!activeStops.length) {
-                return;
-            }
-
-            const nextViewportKey = activeStops.map(buildStopKey).join("|");
-            if (!immediate && viewportKey === nextViewportKey) {
-                return;
-            }
-
-            viewportKey = nextViewportKey;
-
-            const uniquePoints = [];
-            for (const stop of activeStops) {
-                const duplicate = uniquePoints.some(point =>
-                    Math.abs(point[0] - stop.lat) < 1e-7
-                    && Math.abs(point[1] - stop.lng) < 1e-7
-                );
-
-                if (!duplicate) {
-                    uniquePoints.push([stop.lat, stop.lng]);
-                }
-            }
-
-            if (uniquePoints.length === 1) {
-                const [lat, lng] = uniquePoints[0];
-                osmMap.setView([lat, lng], VIEWPORT_MAX_ZOOM, {
-                    animate: !immediate
-                });
-                return;
-            }
-
-            const bounds = L.latLngBounds(uniquePoints).pad(0.45);
-            osmMap.fitBounds(bounds, {
-                animate: !immediate,
-                duration: immediate ? 0 : 0.8,
-                padding: VIEWPORT_PADDING,
-                maxZoom: VIEWPORT_MAX_ZOOM
-            });
         }
 
         async function initOSMMap() {
