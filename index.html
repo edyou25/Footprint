@@ -369,7 +369,7 @@
             </div>
              -->
             <div class="controls">
-                <!-- <button id="playBtn" class="play-btn">▶ 播放</button> -->
+                <button id="playBtn" class="play-btn">▶</button> 
                 <input id="timeSlider" class="time-slider" type="range" min="0" max="100" value="0" />
                 <div id="timeLabel" class="time-label">--</div>
             </div>
@@ -906,7 +906,7 @@
             }
 
             playing = true;
-            playBtn.textContent = "⏸ 暂停";
+            playBtn.textContent = "⏸";
             lastFrameTs = null;
             rafId = requestAnimationFrame(animate);
         }
