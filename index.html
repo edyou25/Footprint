@@ -465,9 +465,12 @@
         let playing = false;
         let rafId = null;
         let lastFrameTs = null;
+        let viewportKey = "";
 
         const ANIMATION_DURATION = 30000; // 30秒跑完整条时间轴
         const MARKER_TRANSITION_MS = 450;
+        const VIEWPORT_PADDING = [64, 64];
+        const VIEWPORT_MAX_ZOOM = 11;
 
         const playBtn = document.getElementById("playBtn");
         const timeSlider = document.getElementById("timeSlider");
@@ -855,6 +858,7 @@
                 moveMarkerToStop(markerControllerB, PERSON_B_LABEL, posB, immediate);
             }
 
+            updateViewport(posA, posB, immediate);
             timeSlider.value = String(Math.round(currentMs));
             updateLabel();
         }
@@ -911,11 +915,50 @@
             rafId = requestAnimationFrame(animate);
         }
 
-        function fitToTracks() {
-            const allPoints = [...parsedA, ...parsedB].map(p => [p.lat, p.lng]);
-            if (allPoints.length) {
-                osmMap.fitBounds(allPoints, { padding: [30, 30] });
+        function updateViewport(stopA, stopB, immediate = false) {
+            if (!osmMap) {
+                return;
             }
+
+            const activeStops = [stopA, stopB].filter(Boolean);
+            if (!activeStops.length) {
+                return;
+            }
+
+            const nextViewportKey = activeStops.map(buildStopKey).join("|");
+            if (!immediate && viewportKey === nextViewportKey) {
+                return;
+            }
+
+            viewportKey = nextViewportKey;
+
+            const uniquePoints = [];
+            for (const stop of activeStops) {
+                const duplicate = uniquePoints.some(point =>
+                    Math.abs(point[0] - stop.lat) < 1e-7
+                    && Math.abs(point[1] - stop.lng) < 1e-7
+                );
+
+                if (!duplicate) {
+                    uniquePoints.push([stop.lat, stop.lng]);
+                }
+            }
+
+            if (uniquePoints.length === 1) {
+                const [lat, lng] = uniquePoints[0];
+                osmMap.setView([lat, lng], VIEWPORT_MAX_ZOOM, {
+                    animate: !immediate
+                });
+                return;
+            }
+
+            const bounds = L.latLngBounds(uniquePoints).pad(0.45);
+            osmMap.fitBounds(bounds, {
+                animate: !immediate,
+                duration: immediate ? 0 : 0.8,
+                padding: VIEWPORT_PADDING,
+                maxZoom: VIEWPORT_MAX_ZOOM
+            });
         }
 
         async function initOSMMap() {
@@ -953,9 +996,9 @@
                 zoomControl: true
             }).setView([31.3069, 116.9553], 6);
 
-            L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                maxZoom: 19,
-                attribution: "&copy; OpenStreetMap contributors"
+            L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+                maxZoom: 23,
+                attribution: "Source: Esri, Vantor, Earthstar Geographics, and the GIS User Community"
             }).addTo(osmMap);
 
             markerA = L.marker(
@@ -977,8 +1020,6 @@
                 rafId: null,
                 targetKey: ""
             };
-
-            fitToTracks();
 
             const step = Math.max(60 * 1000, Math.round((endMs - startMs) / 1200));
             timeSlider.min = String(startMs);
