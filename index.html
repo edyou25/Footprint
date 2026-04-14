@@ -467,7 +467,7 @@
         let lastFrameTs = null;
         let sameLocationOffset = false;
 
-        const ANIMATION_DURATION = 30000; // 30秒跑完整条时间轴
+        const ANIMATION_DURATION = 60000; // 60秒跑完整条时间轴
         const MARKER_TRANSITION_MS = 450;
         const SAME_LOCATION_THRESHOLD = 0.001; // degrees (~100m)
         const SAME_CITY_ICON_OFFSET = 16; // pixels
@@ -958,7 +958,8 @@
             const allTimes = [...parsedA, ...parsedB].flatMap(p => [p.startMs, p.endMs]);
             startMs = Math.min(...allTimes);
             endMs = Math.max(...allTimes);
-            currentMs = startMs;
+            const year2014Ms = new Date("2014-01-01T00:00:00+08:00").getTime();
+            currentMs = Math.max(startMs, Math.min(endMs, year2014Ms));
 
             osmMap = L.map("osmMap", {
                 zoomControl: true
@@ -996,7 +997,7 @@
             timeSlider.min = String(startMs);
             timeSlider.max = String(endMs);
             timeSlider.step = String(step);
-            timeSlider.value = String(startMs);
+            timeSlider.value = String(currentMs);
             timeSlider.disabled = false;
             playBtn.disabled = false;
 
@@ -1007,7 +1008,7 @@
 
             playBtn.addEventListener("click", togglePlay);
 
-            renderScene(startMs, { immediate: true });
+            renderScene(currentMs, { immediate: true });
 
             // 容器初始隐藏/尺寸变更时，Leaflet 常需要手动刷新尺寸
             setTimeout(() => {
