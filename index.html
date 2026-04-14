@@ -365,7 +365,7 @@
         <div class="timeline-section">
             <h2>时间轴回放</h2>
             <div class="timeline-desc">
-                下方地图独立于上面的 Google iframe。轨迹数据从两个外部文件读取，人物在地点切换时会平滑过渡到下一站。
+                下方地图独立于上面的 Google iframe。轨迹数据从两个外部文件读取，只显示人物位置与时间，不显示路径和地点名称。
             </div>
 
             <div class="controls">
@@ -455,8 +455,6 @@
         let markerB;
         let markerControllerA;
         let markerControllerB;
-        let polylineA;
-        let polylineB;
 
         let parsedA = [];
         let parsedB = [];
@@ -819,20 +817,11 @@
         }
 
         function updateLabel() {
-            const activeA = getActiveStop(parsedA, currentMs);
-            const activeB = getActiveStop(parsedB, currentMs);
-            const currentPlaces = [
-                activeA ? `1 ${activeA.name}` : "",
-                activeB ? `2 ${activeB.name}` : ""
-            ].filter(Boolean).join(" · ");
-
-            timeLabel.textContent = currentPlaces
-                ? `${formatTime(currentMs)} · ${currentPlaces}`
-                : formatTime(currentMs);
+            timeLabel.textContent = formatTime(currentMs);
         }
 
         function updateMarkerTooltip(marker, personLabel, stop) {
-            const content = `${personLabel}<br>${stop.name}<br>${stop.startText} - ${stop.endText}`;
+            const content = `${personLabel}<br>${stop.startText} - ${stop.endText}`;
 
             if (marker.getTooltip()) {
                 marker.setTooltipContent(content);
@@ -968,24 +957,6 @@
                 maxZoom: 19,
                 attribution: "&copy; OpenStreetMap contributors"
             }).addTo(osmMap);
-
-            polylineA = L.polyline(
-                parsedA.map(p => [p.lat, p.lng]),
-                {
-                    color: "#ff4d6d",
-                    weight: 4,
-                    opacity: 0.85
-                }
-            ).addTo(osmMap);
-
-            polylineB = L.polyline(
-                parsedB.map(p => [p.lat, p.lng]),
-                {
-                    color: "#3b82f6",
-                    weight: 4,
-                    opacity: 0.85
-                }
-            ).addTo(osmMap);
 
             markerA = L.marker(
                 [parsedA[0].lat, parsedA[0].lng],
