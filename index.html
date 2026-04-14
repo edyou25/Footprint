@@ -962,7 +962,10 @@
 
             osmMap = L.map("osmMap", {
                 zoomControl: true
-            }).setView([31.3069, 116.9553], 6);
+            });
+
+            const allLatLngs = [...parsedA, ...parsedB].map(p => [p.lat, p.lng]);
+            osmMap.fitBounds(allLatLngs, { padding: [40, 40], maxZoom: 5 });
 
             L.tileLayer("https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
                 maxZoom: 23,
