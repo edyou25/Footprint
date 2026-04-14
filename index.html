@@ -862,7 +862,7 @@
         function stopAnimation() {
             playing = false;
             lastFrameTs = null;
-            playBtn.textContent = "▶ 播放";
+            playBtn.textContent = "▶";
             if (rafId) {
                 cancelAnimationFrame(rafId);
                 rafId = null;
